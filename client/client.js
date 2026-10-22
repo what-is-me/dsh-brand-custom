@@ -480,8 +480,11 @@ window.__ModuleLoader__.load({
         if (observer !== undefined) return
         const state = store.getSnapshot()
         if (state.text.heroTitle === null && state.text.heroBadge === null) return
+        const body = document.body
+        if (body === null || body === undefined) return
+        if (typeof window.MutationObserver !== 'function') return
         observer = new window.MutationObserver(schedule)
-        observer.observe(document.body, { childList: true, subtree: true, characterData: true })
+        observer.observe(body, { childList: true, subtree: true, characterData: true })
       }
 
       const onChange = () => {
@@ -746,37 +749,58 @@ window.__ModuleLoader__.load({
 
     const inject = ['slots', 'locale']
 
+    /**
+     * Run one setup step so that a host that does not have what this plugin
+     * expects costs the reader that one feature, never the boot.
+     *
+     * The Loader turns a throwing `apply` into a failed entry, and the web
+     * boot treats any failed entry as fatal for the whole page, so every step
+     * whose failure is survivable is fenced here.
+     * @param label - what the step is, for the console line.
+     * @param body - the step.
+     */
+    function safely(label, body) {
+      try {
+        body()
+      } catch (error) {
+        console.warn(`dsh-brand-custom: ${label} unavailable — ${String(error?.message ?? error)}`)
+      }
+    }
+
     function apply(ctx) {
-      ctx.effect(() => ctx.locale.register(NAMESPACE, dictionaries), 'dsh-brand-custom: locale')
-      const t = ctx.locale.bind(NAMESPACE)
+      safely('settings labels', () => ctx.effect(() => ctx.locale.register(NAMESPACE, dictionaries), 'dsh-brand-custom: locale'))
+      let t = key => key
+      safely('locale binding', () => {
+        t = ctx.locale.bind(NAMESPACE)
+      })
 
       // The observer's own disposer puts the host's copy back.
-      ctx.effect(() => watchHeroText(), 'dsh-brand-custom: hero labels')
+      safely('hero labels', () => ctx.effect(() => watchHeroText(), 'dsh-brand-custom: hero labels'))
 
       // Read once; every occupant and the page follow the same state from here.
-      void store.load()
+      safely('stored configuration', () => void store.load())
 
-      ctx.slots.inject('settings.section', () => ctx.slots.register({
+      safely('settings page', () => ctx.slots.inject('settings.section', () => ctx.slots.register({
         name: 'settings.section',
         id: 'brand-custom',
         order: 60,
         label: () => t('nav'),
         locale: NAMESPACE,
         inject: () => ({ t, store }),
-      }, BrandSection))
+      }, BrandSection)))
 
-      ctx.effect(
+      safely('sidebar mark', () => ctx.effect(
         () => takeover(ctx, 'sidebar.brand.mark', SidebarMark, state => state.images['sidebar-mark'] !== null),
         'dsh-brand-custom: sidebar mark',
-      )
-      ctx.effect(
+      ))
+      safely('sidebar name', () => ctx.effect(
         () => takeover(ctx, 'sidebar.brand.name', SidebarName, state => state.text.sidebarPrimary !== null || state.text.sidebarBadge !== null),
         'dsh-brand-custom: sidebar name',
-      )
-      ctx.effect(
+      ))
+      safely('hero mark', () => ctx.effect(
         () => takeover(ctx, 'conversation.hero.brand.mark', HeroMark, state => state.images['hero-mark'] !== null),
         'dsh-brand-custom: hero mark',
-      )
+      ))
     }
 
     exports.apply = apply

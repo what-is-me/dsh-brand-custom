@@ -1,6 +1,6 @@
 {
   "name": "dsh-brand-custom",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Customize the DSH sidebar brand mark/wordmark and the new-session hero mark/headline from Settings.",
   "type": "module",
@@ -14,7 +14,8 @@
     "lib",
     "client",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "README.zh-CN.md"
   ],
   "dsh": {
     "bundle": {
