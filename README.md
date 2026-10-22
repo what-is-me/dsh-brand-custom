@@ -19,7 +19,7 @@ copy, so an untouched install behaves exactly like a stock one.
 ## Install
 
 ```sh
-dsh plugin --profile <name> add https://github.com/what-is-me/dsh-brand-custom
+dsh plugin --profile <name> add github:what-is-me/dsh-brand-custom
 ```
 
 `<name>` is the profile you run, for example `desktop`. The argument is the
