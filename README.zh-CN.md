@@ -16,7 +16,7 @@
 ## 安装
 
 ```sh
-dsh plugin --profile <name> add https://github.com/what-is-me/dsh-brand-custom
+dsh plugin --profile <name> add github:what-is-me/dsh-brand-custom
 ```
 
 `<name>` 是你实际运行的 profile，例如 `desktop`。参数要写**仓库地址**，不是本地
